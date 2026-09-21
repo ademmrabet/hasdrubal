@@ -1,5 +1,5 @@
 # API Hasdrubal. Contexte de construction : la racine du depot (lockfile commun aux workspaces).
-FROM node:22-alpine
+FROM node:26-alpine
 
 ENV NODE_ENV=production \
     PORT=4000
