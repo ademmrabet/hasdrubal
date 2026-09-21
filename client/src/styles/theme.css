@@ -1,0 +1,93 @@
+/* =====================================================================
+   Charte graphique Hasdrubal de Carthage
+   LE SEUL FICHIER A MODIFIER pour changer le style de toute l'application.
+
+   Palette relevee sur l'identite du restaurant : le cuivre du logo,
+   le sable de son fond, la lumiere doree de la salle, l'olivier des
+   banquettes et la pierre claire des arches.
+   ===================================================================== */
+@theme {
+  /* --- Surfaces : du blanc chaud a la pierre --- */
+  --color-surface:        #fffcf6;
+  --color-surface-muted:  #f7efe0;
+  --color-surface-sunken: #f1e6d2;
+  --color-border:         #e6d8bf;
+
+  /* --- Texte : brun profond plutot que noir --- */
+  --color-ink:            #3a2a1c;
+  --color-ink-soft:       #7a6550;
+  --color-ink-faint:      #a8917a;
+
+  /* --- Marque : le cuivre du logo --- */
+  --color-brand:          #a8683a;
+  --color-brand-soft:     #f4e4d1;
+  --color-brand-strong:   #8a5029;
+
+  /* --- Accents : l'or des luminaires, l'olivier de la salle --- */
+  --color-accent:         #c79a3e;
+  --color-olive:          #6e7a4f;
+  --color-sand:           #e9cf9e;
+  --color-hero:           #e9cf9e;   /* bandeau du menu public : sable le jour, brun le soir */
+
+  /* --- Etats --- */
+  --color-ok:             #5e7444;
+  --color-ok-soft:        #ecf0e1;
+  --color-warn:           #b5761f;
+  --color-warn-soft:      #fbeeda;
+  --color-danger:         #9e3b2e;
+  --color-danger-soft:    #f8e5e1;
+
+  /* --- Formes : angles francs, dans l'esprit art deco du logo --- */
+  --radius-card:          12px;
+  --radius-control:       8px;
+
+  /* --- Typographie --- */
+  --font-display: 'Cinzel', 'Georgia', serif;      /* titres, capitales romaines */
+  --font-sans:    'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+/* Theme sombre : la salle le soir, murs chauds et lumiere doree. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-surface:        #221a14;
+    --color-surface-muted:  #2c2219;
+    --color-surface-sunken: #17110b;
+    --color-border:         #3d3023;
+    --color-ink:            #f4e9d8;
+    --color-ink-soft:       #bca78e;
+    --color-ink-faint:      #8c7a64;
+    --color-brand:          #d89a62;
+    --color-brand-soft:     #35261a;
+    --color-brand-strong:   #e8b382;
+    --color-accent:         #d9b159;
+    --color-olive:          #8d9a68;
+    --color-hero:           #2c2219;
+    --color-ok:             #9bb06e;
+    --color-ok-soft:        #25291a;
+    --color-warn:           #e0a353;
+    --color-warn-soft:      #2f2417;
+    --color-danger:         #e08072;
+    --color-danger-soft:    #331d1a;
+  }
+}
+:root[data-theme='dark'] {
+  --color-surface:        #221a14;
+  --color-surface-muted:  #2c2219;
+  --color-surface-sunken: #17110b;
+  --color-border:         #3d3023;
+  --color-ink:            #f4e9d8;
+  --color-ink-soft:       #bca78e;
+  --color-ink-faint:      #8c7a64;
+  --color-brand:          #d89a62;
+  --color-brand-soft:     #35261a;
+  --color-brand-strong:   #e8b382;
+  --color-accent:         #d9b159;
+  --color-olive:          #8d9a68;
+  --color-hero:           #2c2219;
+  --color-ok:             #9bb06e;
+  --color-ok-soft:        #25291a;
+  --color-warn:           #e0a353;
+  --color-warn-soft:      #2f2417;
+  --color-danger:         #e08072;
+  --color-danger-soft:    #331d1a;
+}

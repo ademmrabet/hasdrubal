@@ -1,0 +1,16 @@
+# Rien de local ne doit entrer dans les images : ni dependances installees,
+# ni secrets, ni photos televersees, ni historique git.
+**/node_modules
+**/dist
+**/.vite
+**/npm-debug.log*
+**/.env
+**/.env.*
+!**/.env.example
+server/uploads
+.git
+.gitignore
+docs
+Claude outputs
+**/*.md
+docker-compose*.yml

@@ -1,0 +1,85 @@
+# Production : images publiees par la CI sur GitHub Container Registry,
+# mises a jour automatiquement chaque nuit par Watchtower.
+#
+#   docker login ghcr.io                       # une fois, sur le serveur
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Chaine complete : push sur main -> CI (tests + images) -> GHCR -> Watchtower a 4 h.
+# Seuls "server" et "web" sont mis a jour. La base n'est JAMAIS touchee :
+# un changement de version majeure de PostgreSQL se fait a la main, apres sauvegarde.
+
+name: hasdrubal
+
+x-watchtower: &watchtower-enabled
+  labels:
+    com.centurylinklabs.watchtower.enable: "true"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hasdrubal}
+      POSTGRES_USER: ${POSTGRES_USER:-hasdrubal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definissez POSTGRES_PASSWORD dans .env}
+      TZ: Africa/Tunis
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    <<: *watchtower-enabled
+    image: ghcr.io/${GHCR_OWNER:-ademmrabet}/hasdrubal-server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hasdrubal}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-hasdrubal}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Definissez JWT_ACCESS_SECRET dans .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Definissez JWT_REFRESH_SECRET dans .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      CLIENT_ORIGIN: ${PUBLIC_URL:-http://localhost:8080}
+      RESTAURANT_NAME: Hasdrubal de Carthage
+      RUN_MIGRATIONS: "true"
+      TZ: Africa/Tunis
+    volumes:
+      - uploads:/app/server/uploads
+
+  web:
+    <<: *watchtower-enabled
+    image: ghcr.io/${GHCR_OWNER:-ademmrabet}/hasdrubal-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+
+  # Fork maintenu de Watchtower : le projet d'origine (containrrr/watchtower)
+  # est archive depuis decembre 2025 et ne recoit plus de correctifs.
+  watchtower:
+    image: nickfedor/watchtower:latest
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_LABEL_ENABLE: "true"          # uniquement les services etiquetes ci-dessus
+      WATCHTOWER_SCHEDULE: "0 0 4 * * *"      # 4 h du matin (secondes en premier champ)
+      WATCHTOWER_CLEANUP: "true"               # supprime les anciennes images
+      WATCHTOWER_ROLLING_RESTART: "true"       # un conteneur a la fois
+      WATCHTOWER_TIMEOUT: 30s                  # laisse l'API terminer ses requetes
+      TZ: Africa/Tunis
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Identifiants GHCR (docker login ghcr.io) si les images sont privees.
+      - ${DOCKER_CONFIG_FILE:-~/.docker/config.json}:/config.json:ro
+
+volumes:
+  pgdata:
+  uploads:

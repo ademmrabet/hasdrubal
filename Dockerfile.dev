@@ -1,0 +1,9 @@
+# Image de developpement : toutes les dependances (y compris dev) installees une fois.
+# Le code n'est pas copie : docker-compose.dev.yml monte le depot, ce qui permet le
+# rechargement a chaud. Reconstruire seulement quand package-lock.json change.
+FROM node:22-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY server/package.json server/
+COPY client/package.json client/
+RUN npm ci --no-audit --no-fund

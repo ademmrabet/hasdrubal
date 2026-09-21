@@ -1,0 +1,86 @@
+@import 'tailwindcss';
+@import './theme.css';
+
+@layer base {
+  html { color-scheme: light dark; }
+  body {
+    background: var(--color-surface-sunken);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Titres en capitales romaines, comme le mot-symbole du restaurant. */
+  h1, h2, .display {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
+
+  /* Les chiffres s'alignent en colonne dans les tableaux. */
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+  }
+  .input {
+    width: 100%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    color: var(--color-ink);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease;
+  }
+  .input:focus { border-color: var(--color-brand); outline: none; }
+  .label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+    margin-bottom: 0.35rem;
+  }
+
+  /* Filet cuivre : rappel du trait qui separe DE et CARTHAGE dans le logo. */
+  .rule-brand {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--color-brand), transparent);
+    opacity: 0.45;
+  }
+
+  /* Arche punique : motif des niches de la salle, utilise en decor. */
+  .arch {
+    border-radius: 999px 999px 0 0;
+    background: linear-gradient(to bottom, var(--color-sand), transparent 78%);
+    opacity: 0.55;
+  }
+}
+
+/* Etat de depart des elements animes par GSAP : evite le flash avant l'animation. */
+.gsap-reveal { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gsap-reveal { opacity: 1 !important; transform: none !important; }
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Impression : seul le chevalet de table sort sur papier. */
+@media print {
+  @page { margin: 12mm; }
+  body { background: #fff !important; }
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-start; }
+  .print-area .card { border-color: #d9c7a6; box-shadow: none; }
+}

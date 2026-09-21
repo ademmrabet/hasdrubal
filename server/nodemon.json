@@ -1,0 +1,8 @@
+{
+  "watch": ["src", ".env"],
+  "ext": "js,json",
+  "ignore": ["uploads/**", "test/**"],
+  "exec": "node src/server.js",
+  "delay": 300,
+  "signal": "SIGTERM"
+}

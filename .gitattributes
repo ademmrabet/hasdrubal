@@ -1,0 +1,5 @@
+# Scripts executes dans les conteneurs Linux : toujours en fins de ligne Unix,
+# meme si le depot est clone sous Windows.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.conf text eol=lf

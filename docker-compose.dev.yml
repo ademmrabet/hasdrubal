@@ -1,0 +1,70 @@
+# Developpement avec rechargement a chaud, sans rien installer sur la machine hors Docker.
+#
+#   docker compose -f docker-compose.dev.yml up --build
+#   -> interface  http://localhost:5173   (se recharge a chaque sauvegarde)
+#   -> API        http://localhost:4000   (redemarre a chaque sauvegarde)
+#   -> Postgres   localhost:5433  utilisateur hasdrubal / mot de passe hasdrubal
+#
+# Apres une modification de package.json : ajouter  --build -V  (reinstalle les dependances).
+
+name: hasdrubal-dev
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  image: hasdrubal-dev
+  working_dir: /app
+  volumes:
+    - .:/app
+    # Les dependances restent celles de l'image Linux : on masque celles de l'hote.
+    - /app/node_modules
+    - /app/server/node_modules
+    - /app/client/node_modules
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: hasdrubal
+      POSTGRES_USER: hasdrubal
+      POSTGRES_PASSWORD: hasdrubal
+      TZ: Africa/Tunis
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hasdrubal -d hasdrubal"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    <<: *app
+    command: sh -c "npm run migrate --workspace server && npm run dev:poll --workspace server"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://hasdrubal:hasdrubal@db:5432/hasdrubal
+      CLIENT_ORIGIN: http://localhost:5173
+      TZ: Africa/Tunis
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    <<: *app
+    command: npm run dev --workspace client
+    environment:
+      VITE_API_TARGET: http://api:4000
+      VITE_USE_POLLING: "true"
+      VITE_HOST: 0.0.0.0
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+volumes:
+  pgdata-dev:

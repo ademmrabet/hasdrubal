@@ -1,0 +1,67 @@
+# Hasdrubal de Carthage — pile complete : base de donnees, API, interface.
+#
+#   cp .env.docker.example .env      # puis renseigner les secrets
+#   docker compose up -d --build
+#   -> http://localhost:8080  (menu public : http://localhost:8080/menu)
+
+name: hasdrubal
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hasdrubal}
+      POSTGRES_USER: ${POSTGRES_USER:-hasdrubal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definissez POSTGRES_PASSWORD dans .env}
+      TZ: Africa/Tunis
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Base non exposee sur le reseau. Pour y acceder depuis cet ordinateur (DBeaver, psql...) :
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: hasdrubal-server
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hasdrubal}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-hasdrubal}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Definissez JWT_ACCESS_SECRET dans .env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Definissez JWT_REFRESH_SECRET dans .env}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      CLIENT_ORIGIN: ${PUBLIC_URL:-http://localhost:8080}
+      RESTAURANT_NAME: Hasdrubal de Carthage
+      RUN_MIGRATIONS: "true"
+      TZ: Africa/Tunis
+    volumes:
+      - uploads:/app/server/uploads
+
+  web:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    image: hasdrubal-web
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+
+volumes:
+  pgdata:
+  uploads:

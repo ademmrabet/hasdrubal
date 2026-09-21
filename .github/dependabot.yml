@@ -1,0 +1,44 @@
+# Mises a jour des dependances : chaque lundi matin, Dependabot ouvre des pull
+# requests. La CI les teste ; vous relisez et fusionnez. Rien n'est applique seul.
+version: 2
+updates:
+  # Paquets npm (racine + workspaces server et client, un seul lockfile)
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Tunis
+    open-pull-requests-limit: 5
+    groups:
+      # Correctifs et mineures regroupes : une PR au lieu de vingt.
+      production-mineures:
+        dependency-type: production
+        update-types: [minor, patch]
+      developpement-mineures:
+        dependency-type: development
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "deps"
+
+  # Images de base des Dockerfiles (node, nginx)
+  - package-ecosystem: docker
+    directories:
+      - "/server"
+      - "/client"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Africa/Tunis
+    commit-message:
+      prefix: "docker"
+
+  # Versions des actions GitHub utilisees par la CI
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
