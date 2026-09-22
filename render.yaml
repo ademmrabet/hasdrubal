@@ -1,0 +1,43 @@
+# Blueprint Render : un seul service Web (image Docker combinee, voir le
+# Dockerfile a la racine). Sur render.com : New > Blueprint > pointer ce
+# depot GitHub. Render lit ce fichier et propose la configuration ci-dessous
+# a la validation - rien n'est cree tant que vous ne cliquez pas "Apply".
+#
+# Pas de base de donnees Render ici : ce projet utilise Neon (deja en place,
+# gratuit sans carte bancaire). DATABASE_URL reste un secret saisi a la main
+# (sync: false) : jamais commite dans ce fichier.
+#
+# Apres le premier deploiement, notez l'URL attribuee par Render
+# (https://<nom-du-service>.onrender.com) et reportez-la dans CLIENT_ORIGIN
+# ci-dessous, puis redeployez - la valeur exacte n'est connue qu'apres coup.
+services:
+  - type: web
+    name: hasdrubal
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: frankfurt
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RESTAURANT_NAME
+        value: Hasdrubal de Carthage
+      - key: DEFAULT_VAT_RATE
+        value: "19"
+      - key: RUN_MIGRATIONS
+        value: "true"
+      - key: COOKIE_SECURE
+        value: "true"
+      # A remplacer par l'URL Render reelle une fois connue (voir note ci-dessus).
+      - key: CLIENT_ORIGIN
+        value: https://hasdrubal.onrender.com
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true

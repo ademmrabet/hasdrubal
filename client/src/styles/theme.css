@@ -46,7 +46,14 @@
   --font-sans:    'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* Theme sombre : la salle le soir, murs chauds et lumiere doree. */
+/* Aligne les controles natifs (scrollbars, champs) et l'UI du navigateur sur
+   le theme choisi, plutot que sur les preferences systeme. */
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark']  { color-scheme: dark; }
+
+/* Theme sombre : la salle le soir, murs chauds et lumiere doree.
+   Filet de securite si theme-init.js n'a pas pu s'executer (JS bloque) :
+   dans ce seul cas, suit encore les preferences systeme. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --color-surface:        #221a14;

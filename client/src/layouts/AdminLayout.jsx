@@ -10,6 +10,7 @@ import { ROLE_LABELS } from '@/lib/format';
 import { revealChildren } from '@/lib/animations';
 import { RESTAURANT } from '@/lib/restaurant';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Badge, cx } from '@/components/ui';
 
 const NAV = [
@@ -78,11 +79,16 @@ export default function AdminLayout() {
           <p className="px-1 pb-2 text-[0.65rem] text-[var(--color-ink-faint)] truncate">
             {RESTAURANT.address}
           </p>
-          <p className="px-1 text-sm font-medium truncate">{user?.fullName}</p>
-          <p className="px-1 text-xs text-[var(--color-ink-faint)] mb-2">{ROLE_LABELS[user?.role]}</p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="px-1 text-sm font-medium truncate">{user?.fullName}</p>
+              <p className="px-1 text-xs text-[var(--color-ink-faint)]">{ROLE_LABELS[user?.role]}</p>
+            </div>
+            <ThemeToggle />
+          </div>
           <button
             onClick={logout}
-            className="flex w-full items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-sm text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-muted)]"
+            className="mt-2 flex w-full items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-sm text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-muted)]"
           >
             <LogOut size={16} /> Se déconnecter
           </button>
@@ -97,6 +103,7 @@ export default function AdminLayout() {
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <Logo width={130} />
+          <ThemeToggle className="ml-auto" />
         </header>
 
         <main ref={mainRef} className="flex-1 p-4 sm:p-6 max-w-[1400px] w-full">

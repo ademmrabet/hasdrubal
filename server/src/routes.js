@@ -8,6 +8,7 @@ import { dashboardRouter } from './modules/dashboard/dashboard.routes.js';
 import { settingsRouter } from './modules/settings/settings.routes.js';
 import { menuRouter } from './modules/menu/menu.routes.js';
 import { publicRouter } from './modules/public/public.routes.js';
+import { payrollRouter } from './modules/payroll/payroll.routes.js';
 
 export const apiRouter = Router();
 
@@ -19,6 +20,8 @@ apiRouter.use('/stock', stockRouter);
 apiRouter.use('/dashboard', dashboardRouter);
 apiRouter.use('/settings', settingsRouter);
 apiRouter.use('/menu', menuRouter);
+apiRouter.use('/payroll', payrollRouter);
 apiRouter.use('/public', publicRouter);   // sans authentification
 
-// Phases suivantes : orders, clients, reservations, staff, payroll, finance, forecast.
+// Phases suivantes : orders, clients, reservations, finance, forecast.
+// touche 1790021509

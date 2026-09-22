@@ -162,8 +162,17 @@ Precautions :
 
 ## Deploiement avec Docker
 
-Trois conteneurs : `db` (PostgreSQL 16), `server` (API) et `web` (nginx, qui sert
-l'interface et relaie `/api` et `/uploads` vers l'API). Seul `web` est expose.
+Il existe trois fichiers `Dockerfile` dans ce depot, pour deux usages differents :
+
+- `server/Dockerfile` et `client/Dockerfile` — deploiement auto-heberge a deux
+  conteneurs, decrit ci-dessous (`docker-compose.yml` / `docker-compose.prod.yml`).
+- `Dockerfile` a la racine — image combinee client+API en un seul conteneur,
+  pour Render (voir "Deploiement sur Render" plus bas). Les deux coexistent
+  sans se géner : modifier l'un ne casse pas l'autre.
+
+Trois conteneurs pour l'auto-hebergement : `db` (PostgreSQL 16), `server` (API)
+et `web` (nginx, qui sert l'interface et relaie `/api` et `/uploads` vers
+l'API). Seul `web` est expose.
 
 ```bash
 cp .env.docker.example .env        # puis renseigner mot de passe et secrets
@@ -197,6 +206,63 @@ Les donnees vivent dans deux volumes Docker, `pgdata` et `uploads`.
 `COOKIE_SECURE=true` et `PUBLIC_URL=https://...`. L'adresse du menu QR se regle
 ensuite dans l'application, page Menu QR.
 
+## Déploiement sur Render (gratuit, sans carte bancaire)
+
+Alternative à l'auto-hébergement Docker ci-dessus : un service Web Render
+**unique**, construit depuis le `Dockerfile` à la racine du dépôt (client et
+API dans le même conteneur — le plan gratuit de Render ne déploie qu'un seul
+conteneur par service, contrairement au `server`+`web` à deux conteneurs
+ci-dessus). Le serveur Express sert alors directement les fichiers compilés
+du client en plus de l'API (voir `server/src/app.js`, `SERVE_CLIENT`) ; le
+déploiement Docker à deux conteneurs plus haut n'est pas affecté par ce
+changement. La base reste Neon (déjà configurée, gratuite, sans carte).
+
+```bash
+# 1. Pousser le code sur GitHub (si ce n'est pas déjà fait)
+git push origin main
+
+# 2. Sur render.com : New > Blueprint > sélectionner ce dépôt.
+#    Render lit render.yaml et propose la configuration ci-dessous ;
+#    vérifier puis cliquer "Apply" (rien n'est créé avant ce clic).
+```
+
+Variables à renseigner à la main dans le tableau de bord Render une fois le
+service créé (jamais dans `render.yaml`, versionné et potentiellement
+public) :
+
+| Variable | Valeur |
+|---|---|
+| `DATABASE_URL` | La chaîne de connexion Neon (`postgresql://...neon.tech/neondb?sslmode=require`) |
+| `CLIENT_ORIGIN` | `https://<nom-du-service>.onrender.com` — connue seulement après le premier déploiement : redéployer une fois l'URL réelle en main |
+
+`JWT_ACCESS_SECRET` et `JWT_REFRESH_SECRET` sont générés automatiquement par
+Render (`generateValue: true` dans `render.yaml`). Les migrations
+s'appliquent seules au démarrage (`RUN_MIGRATIONS=true`), comme avec Docker.
+
+**À régler avant de considérer le restaurant « en ligne » :**
+
+- **Mot de passe Neon.** S'il a été partagé en clair à un moment (dans un
+  message, un fichier `.env` envoyé...), le considérer compromis : le
+  régénérer dans la console Neon (Roles → Reset password) et mettre à jour
+  `DATABASE_URL` partout (Render, `.env` local) avant d'ouvrir l'accès au
+  public.
+- **Comptes de démonstration.** Le seed crée `owner@hasdrubal.tn` /
+  `Hasdrubal2026!` (et les comptes manager/staff) avec un mot de passe
+  visible dans le dépôt. À remplacer par un vrai compte (page Utilisateurs)
+  avant tout usage réel : sinon n'importe qui connaissant ce mot de passe se
+  connecte en tant que propriétaire.
+- **Photos de plats non persistantes.** Le plan gratuit de Render n'offre
+  pas de disque persistant : toute photo téléversée (`server/uploads`)
+  disparaît au déploiement suivant. Tant que cette limite n'est pas levée
+  (stockage objet externe type Cloudflare R2, avec un palier gratuit sans
+  carte bancaire, ou disque payant Render), réserver les photos de plats à
+  la démonstration plutôt qu'à une exploitation réelle.
+- **Mise en veille.** Un service gratuit Render s'endort après ~15 min sans
+  requête et met 30 à 50 secondes à se réveiller sur la requête suivante :
+  le premier client de la journée peut voir un chargement lent. Le plan
+  payant (à partir de 7 $/mois) supprime cette veille, le jour où cela
+  devient gênant.
+
 ## Avancement
 
 - [x] **Phase 1** — Fondations, authentification, RBAC, deux interfaces, module Stock
@@ -204,7 +270,7 @@ ensuite dans l'application, page Menu QR.
 - [ ] Phase 3 — Commandes et caisse
 - [ ] Phase 4 — Clients et fidelite
 - [ ] Phase 5 — Reservations
-- [ ] Phase 6 — Personnel et paie
+- [ ] Phase 6 — Personnel et paie (API et calcul de fiche de paie faits ; interface en attente)
 - [ ] Phase 7 — Finance, factures, TVA
 - [ ] Phase 8 — Previsions et tableaux de bord
 
@@ -222,5 +288,11 @@ Le detail de chaque phase est dans le document `roadmap` du projet Claude.
 - Le mot-symbole est dans `client/public/` : `logo-hasdrubal.png` pour les fonds
   clairs, `logo-hasdrubal-light.png` pour le theme sombre. Remplacer ces deux
   fichiers suffit a changer le logo partout.
+- Theme clair/sombre : clair par defaut (choix du patron), memorise par
+  navigateur une fois change via le bouton bascule (`ThemeToggle`, present
+  sur les deux interfaces et le menu public). `client/public/theme-init.js`
+  applique le theme avant le premier rendu pour eviter un flash ; ne jamais
+  le remplacer par un `<script>` inline, cela romprait la politique de
+  securite (CSP) du serveur en production.
 - La fiche du restaurant (adresse, telephone, horaires, palette) est en base
   dans la table `settings` et exposee par `GET /api/settings`.

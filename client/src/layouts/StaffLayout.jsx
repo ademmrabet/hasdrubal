@@ -4,6 +4,7 @@ import { BookOpen, ClipboardList, LogOut, PackagePlus } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { revealChildren } from '@/lib/animations';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { cx } from '@/components/ui';
 
 /**
@@ -30,12 +31,15 @@ export default function StaffLayout() {
           <Logo width={140} />
           <p className="mt-1 text-xs text-[var(--color-ink-faint)]">{user?.fullName}</p>
         </div>
-        <button
-          onClick={logout}
-          className="flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-sm text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-muted)]"
-        >
-          <LogOut size={16} /> Quitter
-        </button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <button
+            onClick={logout}
+            className="flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2 text-sm text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-muted)]"
+          >
+            <LogOut size={16} /> Quitter
+          </button>
+        </div>
       </header>
 
       <main ref={mainRef} className="flex-1 p-4 pb-24 max-w-3xl w-full mx-auto">

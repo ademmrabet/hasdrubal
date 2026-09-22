@@ -5,6 +5,7 @@ import { ALLERGEN_LABELS, formatMenuPrice } from '@/lib/format';
 import { RESTAURANT } from '@/lib/restaurant';
 import { revealChildren } from '@/lib/animations';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Spinner, cx } from '@/components/ui';
 
 const DAYS = [
@@ -73,6 +74,7 @@ export default function PublicMenu() {
     <div className="min-h-screen bg-[var(--color-surface)]">
       {/* ------------------------------------------------ En-tete */}
       <header className="relative overflow-hidden bg-[var(--color-hero)] px-5 pb-8 pt-10 text-center">
+        <ThemeToggle className="absolute right-3 top-3 z-10 bg-[var(--color-surface)]/70" />
         <div aria-hidden className="absolute -bottom-24 left-1/2 h-56 w-72 -translate-x-1/2 rounded-t-full bg-[var(--color-surface)] opacity-40" />
         <div className="relative">
           <Logo width={230} className="mx-auto" />
