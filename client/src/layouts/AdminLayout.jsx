@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   AlertTriangle, ArrowLeftRight, BookOpen, LayoutDashboard, LogOut, Menu, Package,
-  Truck, Users as UsersIcon, X,
+  Truck, Users as UsersIcon, Wallet, X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useAlerts } from '@/api/hooks';
@@ -21,6 +21,7 @@ const NAV = [
   { to: '/admin/alertes', label: 'Alertes', icon: AlertTriangle, badge: 'alerts' },
   { to: '/admin/fournisseurs', label: 'Fournisseurs', icon: Truck },
   { to: '/admin/utilisateurs', label: 'Utilisateurs', icon: UsersIcon, ownerOnly: true },
+  { to: '/admin/paie', label: 'Paie', icon: Wallet, ownerOnly: true },
 ];
 
 export default function AdminLayout() {

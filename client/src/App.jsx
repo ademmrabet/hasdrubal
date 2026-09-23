@@ -10,6 +10,7 @@ import Suppliers from '@/pages/admin/Suppliers';
 import Movements from '@/pages/admin/Movements';
 import Alerts from '@/pages/admin/Alerts';
 import Users from '@/pages/admin/Users';
+import Payroll from '@/pages/admin/Payroll';
 import StaffToday from '@/pages/staff/Today';
 import StaffStock from '@/pages/staff/StockOps';
 import StaffCarte from '@/pages/staff/Carte';
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="mouvements" element={<Movements />} />
         <Route path="alertes" element={<Alerts />} />
         <Route path="utilisateurs" element={<Users />} />
+        <Route path="paie" element={<Payroll />} />
       </Route>
 
       {/* Interface Staff : equipe de service */}

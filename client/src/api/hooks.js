@@ -218,3 +218,94 @@ export function useSaveSetting(key) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', key] }),
   });
 }
+
+// =====================================================================
+// Paie (proprietaire uniquement) — les taux CNSS/TFP/FOPROLOS/SMIG
+// passent par les hooks de parametres generiques ci-dessus (cle 'payroll').
+// =====================================================================
+function usePayrollInvalidation() {
+  const qc = useQueryClient();
+  // Une seule invalidation large : une avance consommee par une fiche de
+  // paie, par exemple, doit rafraichir a la fois la liste des employes
+  // (avances en attente) et celle des fiches.
+  return () => qc.invalidateQueries({ queryKey: ['payroll'] });
+}
+
+export const useEmployees = (filters = {}) =>
+  useQuery({ queryKey: ['payroll', 'employees', filters], queryFn: () => get('/payroll/employees', filters) });
+
+export const useEmployee = (id) =>
+  useQuery({
+    queryKey: ['payroll', 'employees', 'detail', id],
+    queryFn: () => get(`/payroll/employees/${id}`),
+    enabled: !!id,
+  });
+
+export function useSaveEmployee() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({
+    mutationFn: ({ id, ...body }) =>
+      (id ? api.put(`/payroll/employees/${id}`, body) : api.post('/payroll/employees', body)).then((r) => r.data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeactivateEmployee() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({ mutationFn: (id) => api.delete(`/payroll/employees/${id}`), onSuccess: invalidate });
+}
+
+export function useAddSalaryChange() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({
+    mutationFn: ({ id, ...body }) => api.post(`/payroll/employees/${id}/salary`, body).then((r) => r.data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useAddAdvance() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({
+    mutationFn: ({ id, ...body }) => api.post(`/payroll/employees/${id}/advances`, body).then((r) => r.data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteAdvance() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({
+    mutationFn: (advanceId) => api.delete(`/payroll/advances/${advanceId}`),
+    onSuccess: invalidate,
+  });
+}
+
+export const usePayslips = (filters = {}) =>
+  useQuery({ queryKey: ['payroll', 'payslips', filters], queryFn: () => get('/payroll/payslips', filters) });
+
+export const usePayslip = (id) =>
+  useQuery({
+    queryKey: ['payroll', 'payslips', 'detail', id],
+    queryFn: () => get(`/payroll/payslips/${id}`),
+    enabled: !!id,
+  });
+
+export function useCreatePayslip() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({
+    mutationFn: (body) => api.post('/payroll/payslips', body).then((r) => r.data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useSetPayslipStatus() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({
+    mutationFn: ({ id, ...body }) => api.patch(`/payroll/payslips/${id}/status`, body).then((r) => r.data),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeletePayslip() {
+  const invalidate = usePayrollInvalidation();
+  return useMutation({ mutationFn: (id) => api.delete(`/payroll/payslips/${id}`), onSuccess: invalidate });
+}

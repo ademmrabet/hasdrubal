@@ -74,6 +74,30 @@ export const MOVEMENT_LABELS = {
 
 export const STATUS_LABELS = { ok: 'Normal', bas: 'Stock bas', rupture: 'Rupture' };
 
+// --- Paie ---------------------------------------------------------------
+
+export const CONTRACT_TYPE_LABELS = { cdi: 'CDI', cdd: 'CDD', stage: 'Stage', autre: 'Autre' };
+
+export const PAYSLIP_STATUS_LABELS = { brouillon: 'Brouillon', validee: 'Validée', payee: 'Payée' };
+
+/** "2026-01-15" -> "janvier 2026" (mois de la periode de paie) */
+export function formatMonthLabel(dateStr) {
+  if (!dateStr) return '—';
+  const date = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return '—';
+  const label = new Intl.DateTimeFormat('fr-TN', { month: 'long', year: 'numeric', timeZone: 'Africa/Tunis' }).format(date);
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+/** "2026-01" (valeur d'un <input type="month">) -> { periodStart, periodEnd } du mois calendaire. */
+export function monthToPeriod(monthValue) {
+  const [year, month] = monthValue.split('-').map(Number);
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(year, month, 0));
+  const iso = (d) => d.toISOString().slice(0, 10);
+  return { periodStart: iso(start), periodEnd: iso(end) };
+}
+
 // --- Menu -------------------------------------------------------------
 
 /**
