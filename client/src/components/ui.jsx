@@ -129,72 +129,96 @@ export const Select = ({ children, ...props }) => (
  * Sans lui le tableau se comporte exactement comme avant (aucune case a cocher).
  */
 export function Table({ columns, rows, keyField = 'id', empty = 'Aucune donnée', onRowClick, selection }) {
+  const scrollRef = useRef(null);
+  // Sur petit ecran, certains tableaux (plus de 3-4 colonnes) depassent la
+  // largeur visible : le defilement horizontal fonctionne mais n'est pas
+  // toujours evident au toucher. On affiche un indice seulement quand il y a
+  // vraiment quelque chose a faire defiler.
+  const [scrollable, setScrollable] = useState(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return undefined;
+    const check = () => setScrollable(el.scrollWidth > el.clientWidth + 1);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [rows, columns]);
+
   if (!rows?.length) return <EmptyState message={empty} />;
 
   const allSelected = selection ? rows.every((row) => selection.selectedIds.has(row[keyField])) : false;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b border-[var(--color-border)]">
-            {selection && (
-              <th className="py-2.5 px-3 w-8">
-                <input
-                  type="checkbox"
-                  aria-label="Tout sélectionner"
-                  checked={allSelected}
-                  onChange={selection.onToggleAll}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </th>
-            )}
-            {columns.map((col) => (
-              <th
-                key={col.key}
-                className={cx(
-                  'py-2.5 px-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]',
-                  col.align === 'right' ? 'text-right' : 'text-left',
-                )}
-              >
-                {col.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => {
-            const checked = selection?.selectedIds.has(row[keyField]);
-            return (
-              <tr
-                key={row[keyField]}
-                onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={cx(
-                  'border-b border-[var(--color-border)] last:border-0',
-                  onRowClick && 'cursor-pointer hover:bg-[var(--color-surface-muted)]',
-                  checked && 'bg-[var(--color-surface-muted)]',
-                )}
-              >
-                {selection && (
-                  <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      aria-label="Sélectionner"
-                      checked={!!checked}
-                      onChange={() => selection.onToggle(row[keyField])}
-                    />
-                  </td>
-                )}
-                {columns.map((col) => (
-                  <td key={col.key} className={cx('py-2.5 px-3', col.align === 'right' && 'text-right tabular')}>
-                    {col.render ? col.render(row) : row[col.key]}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div>
+      <div ref={scrollRef} className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--color-border)]">
+              {selection && (
+                <th className="py-2.5 px-3 w-8">
+                  <input
+                    type="checkbox"
+                    aria-label="Tout sélectionner"
+                    checked={allSelected}
+                    onChange={selection.onToggleAll}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </th>
+              )}
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  className={cx(
+                    'py-2.5 px-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-ink-faint)]',
+                    col.align === 'right' ? 'text-right' : 'text-left',
+                  )}
+                >
+                  {col.header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => {
+              const checked = selection?.selectedIds.has(row[keyField]);
+              return (
+                <tr
+                  key={row[keyField]}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  className={cx(
+                    'border-b border-[var(--color-border)] last:border-0',
+                    onRowClick && 'cursor-pointer hover:bg-[var(--color-surface-muted)]',
+                    checked && 'bg-[var(--color-surface-muted)]',
+                  )}
+                >
+                  {selection && (
+                    <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        aria-label="Sélectionner"
+                        checked={!!checked}
+                        onChange={() => selection.onToggle(row[keyField])}
+                      />
+                    </td>
+                  )}
+                  {columns.map((col) => (
+                    <td key={col.key} className={cx('py-2.5 px-3', col.align === 'right' && 'text-right tabular')}>
+                      {col.render ? col.render(row) : row[col.key]}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {scrollable && (
+        <p className="sm:hidden mt-1.5 text-center text-[11px] text-[var(--color-ink-faint)]">
+          ← Faites glisser pour voir plus →
+        </p>
+      )}
     </div>
   );
 }
@@ -276,7 +300,7 @@ export function BarChart({ data, height = 150, formatValue = (v) => v, formatLab
   const max = Math.max(...data.map((d) => Math.max(d.primary ?? 0, d.secondary ?? 0)), 1);
 
   return (
-    <div className="w-full" role="img" aria-label="Évolution sur la période">
+    <div className="w-full overflow-hidden" role="img" aria-label="Évolution sur la période">
       <div className="flex items-stretch gap-1.5" style={{ height }}>
         {data.map((point, index) => (
           <div key={point.label ?? index} className="flex-1 h-full flex flex-col justify-end gap-0.5 group relative">

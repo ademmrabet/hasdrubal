@@ -16,7 +16,7 @@ import { Badge, cx } from '@/components/ui';
 const NAV = [
   { to: '/admin', end: true, label: 'Tableau de bord', icon: LayoutDashboard },
   { to: '/admin/carte', label: 'La carte', icon: BookOpen },
-  { to: '/admin/ingredients', label: 'Ingrédients', icon: Package },
+  { to: '/admin/ingredients', label: 'Stock', icon: Package },
   { to: '/admin/mouvements', label: 'Mouvements', icon: ArrowLeftRight },
   { to: '/admin/alertes', label: 'Alertes', icon: AlertTriangle, badge: 'alerts' },
   { to: '/admin/fournisseurs', label: 'Fournisseurs', icon: Truck },

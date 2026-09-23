@@ -38,6 +38,10 @@ const idParam = z.object({ id: z.string().uuid('Identifiant invalide') });
 const bulkIdsSchema = z.object({
   ids: z.array(z.string().uuid('Identifiant invalide')).min(1, 'Aucun ingrédient sélectionné').max(500),
 });
+const costSchema = z.object({
+  avgCostMillimes: z.coerce.number().int().min(0, 'Coût invalide'),
+  reason: z.string().trim().max(200).nullable().optional(),
+});
 const listQuery = z.object({
   search: z.string().trim().optional(),
   categoryId: z.string().uuid().optional(),
@@ -150,6 +154,38 @@ ingredientsRouter.put(
     );
     if (!rowCount) throw ApiError.notFound('Ingrédient introuvable');
     await audit({ userId: req.user.id, action: 'update', entity: 'ingredient', entityId: req.params.id });
+    const updated = await query(`SELECT ${STOCK_COLUMNS} FROM v_ingredient_stock WHERE id = $1`, [req.params.id]);
+    res.json({ data: updated.rows[0] });
+  }),
+);
+
+// Correction du cout moyen en dehors de toute reception : le prix d'un
+// fournisseur a change et l'owner/manager veut que les marges de la carte
+// le refletent tout de suite, sans attendre (ou fabriquer) une livraison.
+// N'affecte JAMAIS les lots deja receptionnes (stock_batches.unit_cost_millimes,
+// donc ni la valeur de stock ni le cout des sorties passees) : seule la
+// reference utilisee pour le cout des NOUVELLES fiches techniques change.
+// Tracee dans le journal d'audit (valeur avant/apres), pas comme un mouvement
+// de stock puisqu'aucune quantite ne bouge.
+ingredientsRouter.patch(
+  '/:id/cost',
+  requireAdmin,
+  validate({ params: idParam, body: costSchema }),
+  asyncHandler(async (req, res) => {
+    const before = await query('SELECT avg_cost_millimes FROM ingredients WHERE id = $1', [req.params.id]);
+    if (!before.rowCount) throw ApiError.notFound('Ingrédient introuvable');
+
+    await query('UPDATE ingredients SET avg_cost_millimes = $2 WHERE id = $1',
+      [req.params.id, req.body.avgCostMillimes]);
+
+    await audit({
+      userId: req.user.id, action: 'update_cost', entity: 'ingredient', entityId: req.params.id,
+      payload: {
+        fromMillimes: before.rows[0].avg_cost_millimes,
+        toMillimes: req.body.avgCostMillimes,
+        reason: req.body.reason ?? null,
+      },
+    });
     const updated = await query(`SELECT ${STOCK_COLUMNS} FROM v_ingredient_stock WHERE id = $1`, [req.params.id]);
     res.json({ data: updated.rows[0] });
   }),

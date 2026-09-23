@@ -2,12 +2,17 @@
 @import './theme.css';
 
 @layer base {
-  html { color-scheme: light dark; }
+  /* Filet de sécurité mobile : un élément mal contenu (tooltip, menu hors
+     canevas) ne doit jamais créer de défilement horizontal ou forcer un
+     zoom arrière sur téléphone. Le défilement horizontal voulu (tableaux,
+     etc.) reste scopé à son propre conteneur via overflow-x-auto. */
+  html { color-scheme: light dark; overflow-x: hidden; }
   body {
     background: var(--color-surface-sunken);
     color: var(--color-ink);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
   }
 
   /* Titres en capitales romaines, comme le mot-symbole du restaurant. */

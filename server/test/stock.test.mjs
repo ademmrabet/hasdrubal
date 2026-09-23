@@ -30,6 +30,8 @@ try {
   check('login owner', owner.status === 200 && owner.user.role === 'owner');
   const staff = await login('staff@hasdrubal.tn');
   check('login staff', staff.status === 200 && staff.user.role === 'staff');
+  const manager = await login('manager@hasdrubal.tn');
+  check('login manager', manager.status === 200 && manager.user.role === 'manager');
   const bad = await login('owner@hasdrubal.tn').then(() => fetch(`${BASE}/auth/login`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ email: 'owner@hasdrubal.tn', password: 'mauvais' }),
@@ -208,6 +210,39 @@ try {
     method: 'DELETE', body: JSON.stringify({ ids: ['00000000-0000-4000-8000-000000000000'] }),
   });
   check('identifiant inconnu : reponse normale, rien de desactive', unknownId.status === 200 && unknownId.body.data.deactivatedCount === 0);
+
+  console.log('\n--- Correction manuelle du cout moyen ---');
+  const costTarget = list.body.data.find((i) => i.id !== target.id && i.avgCostMillimes > 0) ?? list.body.data[0];
+  const staffCost = await call(staff.token, `/ingredients/${costTarget.id}/cost`, {
+    method: 'PATCH', body: JSON.stringify({ avgCostMillimes: 9999 }),
+  });
+  check('staff bloque sur la correction de cout', staffCost.status === 403, `recu ${staffCost.status}`);
+
+  const negativeCost = await call(owner.token, `/ingredients/${costTarget.id}/cost`, {
+    method: 'PATCH', body: JSON.stringify({ avgCostMillimes: -100 }),
+  });
+  check('cout negatif refuse', negativeCost.status === 400, JSON.stringify(negativeCost.body));
+
+  const beforeCostFix = await call(owner.token, `/ingredients/${costTarget.id}`);
+  const managerCost = await call(manager.token, `/ingredients/${costTarget.id}/cost`, {
+    method: 'PATCH', body: JSON.stringify({ avgCostMillimes: 4200, reason: 'Nouveau tarif fournisseur' }),
+  });
+  check('manager corrige le cout moyen', managerCost.status === 200 && managerCost.body.data.avgCostMillimes === 4200,
+    JSON.stringify(managerCost.body).slice(0, 200));
+
+  const afterCostFix = await call(owner.token, `/ingredients/${costTarget.id}`);
+  check('cout persiste a la relecture', afterCostFix.body.data.avgCostMillimes === 4200);
+  check('valeur de stock inchangee (basee sur les lots reels, pas le cout de reference)',
+    afterCostFix.body.data.stockValueMillimes === beforeCostFix.body.data.stockValueMillimes,
+    `${beforeCostFix.body.data.stockValueMillimes} vs ${afterCostFix.body.data.stockValueMillimes}`);
+  check('lots existants non modifies',
+    JSON.stringify(afterCostFix.body.data.batches.map((b) => b.unitCostMillimes)) ===
+    JSON.stringify(beforeCostFix.body.data.batches.map((b) => b.unitCostMillimes)));
+
+  const unknownCost = await call(owner.token, '/ingredients/00000000-0000-4000-8000-000000000000/cost', {
+    method: 'PATCH', body: JSON.stringify({ avgCostMillimes: 1000 }),
+  });
+  check('ingredient inconnu : 404', unknownCost.status === 404);
 
   console.log('\n--- Fournisseurs ---');
   const sup = await call(owner.token, '/suppliers');

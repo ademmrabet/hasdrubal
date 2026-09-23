@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, Search, Trash2 } from 'lucide-react';
 import {
-  useCategories, useDeleteIngredients, useIngredient, useIngredients, useInventoryCount, useSaveIngredient, useSuppliers,
+  useCategories, useDeleteIngredients, useIngredient, useIngredients, useInventoryCount, useSaveIngredient,
+  useSuppliers, useUpdateIngredientCost,
 } from '@/api/hooks';
 import { errorMessage } from '@/api/client';
-import { formatDate, formatQty, formatTND, STATUS_LABELS, UNIT_LABELS } from '@/lib/format';
+import { formatDate, formatQty, formatTND, STATUS_LABELS, toDinars, toMillimes, UNIT_LABELS } from '@/lib/format';
 import {
   Badge, Button, Card, ErrorNote, Field, Input, Modal, PageHeader, Select, Spinner, Table,
 } from '@/components/ui';
@@ -67,7 +68,7 @@ export default function Ingredients() {
   return (
     <>
       <PageHeader
-        title="Ingrédients"
+        title="Stock"
         subtitle="Niveaux de stock, seuils d'alerte et coût moyen"
         actions={<Button onClick={() => setEditing({ ...EMPTY })}><Plus size={15} /> Nouvel ingrédient</Button>}
       />
@@ -295,9 +296,14 @@ function IngredientForm({ initial, categories, suppliers, onClose }) {
 function IngredientDetail({ id, onClose, onEdit }) {
   const { data, isLoading } = useIngredient(id);
   const inventory = useInventoryCount();
+  const updateCost = useUpdateIngredientCost();
   const [counted, setCounted] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [newCost, setNewCost] = useState('');
+  const [costReason, setCostReason] = useState('');
+  const [costMessage, setCostMessage] = useState('');
+  const [costError, setCostError] = useState('');
 
   const row = data?.data;
 
@@ -315,6 +321,20 @@ function IngredientDetail({ id, onClose, onEdit }) {
       setCounted('');
     } catch (err) {
       setError(errorMessage(err, 'Inventaire impossible'));
+    }
+  };
+
+  const submitCost = async (event) => {
+    event.preventDefault();
+    setCostError('');
+    setCostMessage('');
+    try {
+      await updateCost.mutateAsync({ id, avgCostMillimes: toMillimes(newCost), reason: costReason || null });
+      setCostMessage('Coût moyen mis à jour.');
+      setNewCost('');
+      setCostReason('');
+    } catch (err) {
+      setCostError(errorMessage(err, 'Mise à jour impossible'));
     }
   };
 
@@ -363,6 +383,32 @@ function IngredientDetail({ id, onClose, onEdit }) {
             </form>
             {message && <p className="mt-2 text-sm text-[var(--color-ok)]">{message}</p>}
             <div className="mt-2"><ErrorNote message={error} /></div>
+          </section>
+
+          <section className="border-t border-[var(--color-border)] pt-4">
+            <h3 className="text-sm font-semibold">Coût moyen</h3>
+            <p className="text-xs text-[var(--color-ink-soft)] mb-3">
+              À utiliser si le prix fournisseur a changé et que la marge affichée sur la carte doit
+              le refléter tout de suite. N'affecte ni le stock déjà réceptionné, ni son historique —
+              seul le coût de référence pour les nouvelles fiches techniques change.
+            </p>
+            <form onSubmit={submitCost} className="flex flex-wrap items-end gap-2">
+              <div className="w-32">
+                <Field label={`Nouveau coût (DT/${row.unit})`}>
+                  <Input type="number" min="0" step="0.001" required value={newCost}
+                         onChange={(e) => setNewCost(e.target.value)} />
+                </Field>
+              </div>
+              <div className="flex-1 min-w-[160px]">
+                <Field label="Motif (optionnel)">
+                  <Input value={costReason} onChange={(e) => setCostReason(e.target.value)}
+                         placeholder="Ex. nouveau tarif fournisseur" />
+                </Field>
+              </div>
+              <Button type="submit" variant="secondary" loading={updateCost.isPending}>Mettre à jour</Button>
+            </form>
+            {costMessage && <p className="mt-2 text-sm text-[var(--color-ok)]">{costMessage}</p>}
+            <div className="mt-2"><ErrorNote message={costError} /></div>
           </section>
 
           <div className="flex justify-end gap-2 border-t border-[var(--color-border)] pt-4">

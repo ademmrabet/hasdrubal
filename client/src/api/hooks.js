@@ -59,6 +59,20 @@ export function useDeleteIngredients() {
   });
 }
 
+// Correction manuelle du cout moyen (hors reception) : impacte le cout des
+// fiches techniques et donc les marges affichees sur la carte.
+export function useUpdateIngredientCost() {
+  const invalidate = useStockInvalidation();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...body }) => api.patch(`/ingredients/${id}/cost`, body).then((r) => r.data),
+    onSuccess: () => {
+      invalidate();
+      qc.invalidateQueries({ queryKey: ['menu'] });
+    },
+  });
+}
+
 export function useSaveSupplier() {
   const qc = useQueryClient();
   return useMutation({
