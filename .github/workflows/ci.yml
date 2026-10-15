@@ -61,7 +61,7 @@ jobs:
             dockerfile: client/Dockerfile
     steps:
       - uses: actions/checkout@v5
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: Nom de l'image (GHCR exige des minuscules)
         id: image
