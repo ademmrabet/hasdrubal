@@ -1,7 +1,7 @@
 # Contexte de construction : la racine du depot.
 
 # Etape 1 : compilation Vite.
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY server/package.json server/
